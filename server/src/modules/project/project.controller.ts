@@ -8,11 +8,11 @@ import {
   Body,
   Query,
 } from '@nestjs/common';
-import { AccountService } from './account.service';
+import { ProjectService } from './project.service';
 
-@Controller('accounts')
-export class AccountController {
-  constructor(private readonly service: AccountService) {}
+@Controller('projects')
+export class ProjectController {
+  constructor(private readonly service: ProjectService) {}
 
   @Post()
   create(@Body() body) {
@@ -39,11 +39,6 @@ export class AccountController {
     return this.service.delete(Number(id));
   }
 
-  @Post('login')
-  login(@Body() body) {
-    return this.service.login(body.email, body.password);
-  }
-
   @Get('deactive')
   getDeactive(@Query() query) {
     return this.service.getDeleted(query || {});
@@ -52,22 +47,5 @@ export class AccountController {
   @Put('deactive/:id')
   restore(@Param('id') id: string) {
     return this.service.restore(Number(id));
-  }
-
-  @Put(':id/password')
-  changePassword(@Param('id') id: string, @Body() body) {
-    return this.service.changePassword(
-      Number(id),
-      body.oldPassword,
-      body.newPassword,
-    );
-  }
-
-  @Get(':id/stats')
-  getStats(@Param('id') id: string, @Query('projectId') projectId?: string) {
-    return this.service.getStats(
-      Number(id),
-      projectId ? Number(projectId) : null,
-    );
   }
 }

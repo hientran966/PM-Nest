@@ -11,18 +11,18 @@ import { Inject } from '@nestjs/common';
 export class AccountService {
   constructor(@Inject('MYSQL') private readonly mysql: any) {}
 
-  extractAuthData(payload: any) {
-    const auth: any = {
+  extractAccountData(payload: any) {
+    const account: any = {
       email: payload.email,
       name: payload.name,
       role: payload.role ?? 'user',
     };
 
-    Object.keys(auth).forEach((key) => {
-      if (auth[key] === undefined) delete auth[key];
+    Object.keys(account).forEach((key) => {
+      if (account[key] === undefined) delete account[key];
     });
 
-    return auth;
+    return account;
   }
 
   // ===== CREATE =====
@@ -46,7 +46,7 @@ export class AccountService {
 
     if (!payload.password) payload.password = 'defaultPW';
 
-    const auth = await this.extractAuthData(payload);
+    const account = await this.extractAccountData(payload);
     const connection = await this.mysql.getConnection();
 
     try {
@@ -57,11 +57,11 @@ export class AccountService {
       const [result] = await connection.execute(
         `INSERT INTO users (email, name, role, password_hash)
          VALUES (?, ?, ?, ?)`,
-        [auth.email, auth.name, auth.role, hashedPassword],
+        [account.email, account.name, account.role, hashedPassword],
       );
 
       await connection.commit();
-      return { id: result.insertId, ...auth };
+      return { id: result.insertId, ...account };
     } catch (error) {
       await connection.rollback();
       throw error;
@@ -112,7 +112,10 @@ export class AccountService {
 
   // ===== UPDATE =====
   async update(id: number, payload: any) {
-    const update = await this.extractAuthData(payload);
+    const user = await this.findById(id);
+    if (!user) throw new NotFoundException('Tài khoản không tồn tại');
+
+    const update = await this.extractAccountData(payload);
 
     let sql = 'UPDATE users SET ';
     const fields: any[] = [];
@@ -143,7 +146,7 @@ export class AccountService {
   // ===== DELETE (SOFT) =====
   async delete(id: number) {
     const user = await this.findById(id);
-    if (!user) return null;
+    if (!user) throw new NotFoundException('Tài khoản không tồn tại');
 
     const deletedAt = new Date();
 
@@ -157,6 +160,9 @@ export class AccountService {
 
   // ===== RESTORE =====
   async restore(id: number) {
+    const user = await this.findById(id);
+    if (!user) throw new NotFoundException('Tài khoản không tồn tại');
+
     const [result] = await this.mysql.execute(
       'UPDATE users SET deleted_at = NULL WHERE id = ?',
       [id],
@@ -174,17 +180,17 @@ export class AccountService {
       [identifier, identifier],
     );
 
-    const auth = rows[0];
-    if (!auth) throw new NotFoundException('Tài khoản không tồn tại');
+    const account = rows[0];
+    if (!account) throw new NotFoundException('Tài khoản không tồn tại');
 
-    const isMatch = await bcrypt.compare(password, auth.password_hash);
+    const isMatch = await bcrypt.compare(password, account.password_hash);
     if (!isMatch) throw new BadRequestException('Mật khẩu không đúng');
 
     const payload = {
-      id: auth.id,
-      email: auth.email,
-      name: auth.name,
-      role: auth.role,
+      id: account.id,
+      email: account.email,
+      name: account.name,
+      role: account.role,
     };
 
     const token = jwt.sign(payload, process.env.JWT_SECRET, {
