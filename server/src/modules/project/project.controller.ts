@@ -35,17 +35,22 @@ export class ProjectController {
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.service.delete(Number(id));
+  delete(@Param('id') id: string, @Body('actor_id') actorId: number) {
+    return this.service.delete(Number(id), actorId);
   }
 
-  @Get('deactive')
-  getDeactive(@Query() query) {
-    return this.service.getDeleted(query || {});
+  @Get('user/:userId')
+  getByUser(@Param('userId') userId: string) {
+    return this.service.getByUser(Number(userId));
   }
 
-  @Put('deactive/:id')
-  restore(@Param('id') id: string) {
-    return this.service.restore(Number(id));
+  @Get(':id/report')
+  report(@Param('id') id: string) {
+    return this.service.report(Number(id));
+  }
+
+  @Get(':id/role/:userId')
+  getRole(@Param('id') projectId: string, @Param('userId') userId: string) {
+    return this.service.getRole(Number(projectId), Number(userId));
   }
 }
