@@ -354,30 +354,30 @@ export class ProjectService {
   async getWorkload(projectId: number) {
     const [rows] = await this.mysql.execute(
       `
-    SELECT 
-      u.name,
-      COUNT(ta.id) AS assigned_tasks,
-      ROUND(
-        COUNT(ta.id) / NULLIF(total.total_tasks, 0) * 100
-      ) AS workload_percent
-    FROM project_members pm
-    JOIN users u ON pm.user_id = u.id
-    LEFT JOIN task_assignees ta 
-      ON ta.user_id = pm.user_id
-      AND ta.deleted_at IS NULL
-    LEFT JOIN tasks t 
-      ON ta.task_id = t.id
-      AND t.project_id = ?
-      AND t.deleted_at IS NULL
-    CROSS JOIN (
-      SELECT COUNT(*) AS total_tasks
-      FROM tasks
-      WHERE project_id = ? AND deleted_at IS NULL
-    ) total
-    WHERE pm.project_id = ?
-      AND pm.status = 'accepted'
-      AND pm.deleted_at IS NULL
-    GROUP BY pm.user_id
+      SELECT 
+        u.name,
+        COUNT(ta.id) AS assigned_tasks,
+        ROUND(
+          COUNT(ta.id) / NULLIF(MAX(total.total_tasks), 0) * 100
+        ) AS workload_percent
+      FROM project_members pm
+      JOIN users u ON pm.user_id = u.id
+      LEFT JOIN task_assignees ta 
+        ON ta.user_id = pm.user_id
+        AND ta.deleted_at IS NULL
+      LEFT JOIN tasks t 
+        ON ta.task_id = t.id
+        AND t.project_id = ?
+        AND t.deleted_at IS NULL
+      CROSS JOIN (
+        SELECT COUNT(*) AS total_tasks
+        FROM tasks
+        WHERE project_id = ? AND deleted_at IS NULL
+      ) total
+      WHERE pm.project_id = ?
+        AND pm.status = 'accepted'
+        AND pm.deleted_at IS NULL
+      GROUP BY pm.user_id, u.name
     `,
       [projectId, projectId, projectId],
     );
@@ -394,11 +394,11 @@ export class ProjectService {
     FROM (
       SELECT 
         task_id,
-        DATE(created_at) as created_at,
+        DATE(pl.created_at) as created_at,
         progress,
         ROW_NUMBER() OVER (
-          PARTITION BY task_id, DATE(created_at)
-          ORDER BY created_at DESC
+          PARTITION BY task_id, DATE(pl.created_at)
+          ORDER BY pl.created_at DESC
         ) as rn
       FROM progress_logs pl
       JOIN tasks t ON pl.task_id = t.id

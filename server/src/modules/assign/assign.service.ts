@@ -35,7 +35,7 @@ export class AssignService {
       if (!connection) await conn.beginTransaction();
 
       const [existing] = await conn.execute(
-        `SELECT id FROM assigns
+        `SELECT id FROM task_assignees
          WHERE task_id = ? AND user_id = ? AND deleted_at IS NULL`,
         [assign.task_id, assign.user_id],
       );
@@ -46,7 +46,7 @@ export class AssignService {
       }
 
       const [result] = await conn.execute(
-        `INSERT INTO assigns (task_id, user_id)
+        `INSERT INTO task_assignees (task_id, user_id)
          VALUES (?, ?)`,
         [assign.task_id, assign.user_id],
       );
@@ -79,7 +79,7 @@ export class AssignService {
 
   // ===== FIND =====
   async find(filter: any = {}) {
-    let sql = `SELECT * FROM assigns WHERE deleted_at IS NULL`;
+    let sql = `SELECT * FROM task_assignees WHERE deleted_at IS NULL`;
     const params: any[] = [];
 
     if (filter.task_id) {
@@ -98,7 +98,7 @@ export class AssignService {
 
   async findById(id: number) {
     const [rows] = await this.mysql.execute(
-      `SELECT * FROM assigns WHERE id = ? AND deleted_at IS NULL`,
+      `SELECT * FROM task_assignees WHERE id = ? AND deleted_at IS NULL`,
       [id],
     );
 
@@ -124,7 +124,7 @@ export class AssignService {
 
     if (fields.length === 0) return existing;
 
-    const sql = `UPDATE assigns SET ${fields.join(', ')} WHERE id = ?`;
+    const sql = `UPDATE task_assignees SET ${fields.join(', ')} WHERE id = ?`;
     params.push(id);
 
     await this.mysql.execute(sql, params);
@@ -139,10 +139,10 @@ export class AssignService {
 
     const deletedAt = new Date();
 
-    await this.mysql.execute(`UPDATE assigns SET deleted_at = ? WHERE id = ?`, [
-      deletedAt,
-      id,
-    ]);
+    await this.mysql.execute(
+      `UPDATE task_assignees SET deleted_at = ? WHERE id = ?`,
+      [deletedAt, id],
+    );
 
     return { ...existing, deleted_at: deletedAt };
   }
@@ -150,7 +150,7 @@ export class AssignService {
   // ===== RESTORE =====
   async restore(id: number) {
     const [result] = await this.mysql.execute(
-      `UPDATE assigns SET deleted_at = NULL WHERE id = ?`,
+      `UPDATE task_assignees SET deleted_at = NULL WHERE id = ?`,
       [id],
     );
 
@@ -159,7 +159,7 @@ export class AssignService {
 
   // ===== GET DELETED =====
   async getDeleted(filter: any = {}) {
-    let sql = `SELECT * FROM assigns WHERE deleted_at IS NOT NULL`;
+    let sql = `SELECT * FROM task_assignees WHERE deleted_at IS NOT NULL`;
     const params: any[] = [];
 
     if (filter.task_id) {
