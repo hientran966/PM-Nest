@@ -8,6 +8,7 @@ import { AssignModule } from './modules/assign/assign.module';
 import { ActivityModule } from './modules/activity/activity.module';
 import { MemberModule } from './modules/member/member.module';
 import { NotificationModule } from './modules/notification/notification.module';
+import { FileModule } from './modules/file/file.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { NotificationModule } from './modules/notification/notification.module';
     TaskModule,
     AssignModule,
     ActivityModule,
+    FileModule,
   ],
 })
 export class AppModule {}
