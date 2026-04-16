@@ -26,7 +26,9 @@ export class ProjectService {
     };
 
     Object.keys(project).forEach((key) => {
-      if (project[key] === undefined) delete project[key];
+      if (project[key] === undefined) {
+        project[key] = null;
+      }
     });
 
     return project;
@@ -49,7 +51,7 @@ export class ProjectService {
          VALUES (?, ?, ?, ?, ?, ?)`,
         [
           project.name,
-          project.description,
+          project.description || null,
           project.start_date,
           project.end_date,
           project.status,
@@ -98,45 +100,111 @@ export class ProjectService {
 
   // ===== FIND =====
   async find(filter: any = {}) {
-    let sql = `SELECT * FROM projects WHERE deleted_at IS NULL`;
+    let sql = `
+    SELECT 
+      p.*,
+      pm.user_id,
+      pm.role,
+      pm.status,
+      u.name as user_name
+    FROM projects p
+    LEFT JOIN project_members pm 
+      ON p.id = pm.project_id 
+      AND pm.deleted_at IS NULL
+    LEFT JOIN users u 
+      ON pm.user_id = u.id
+    WHERE p.deleted_at IS NULL
+  `;
+
     const params: any[] = [];
 
     if (filter.name) {
-      sql += ' AND name LIKE ?';
+      sql += ' AND p.name LIKE ?';
       params.push(`%${filter.name}%`);
     }
 
     if (filter.status) {
-      sql += ' AND status = ?';
+      sql += ' AND p.status = ?';
       params.push(filter.status);
     }
 
     if (filter.created_by) {
-      sql += ' AND created_by = ?';
+      sql += ' AND p.created_by = ?';
       params.push(filter.created_by);
     }
 
     const [rows] = await this.mysql.execute(sql, params);
-    return rows;
+
+    const map = new Map();
+
+    for (const row of rows) {
+      if (!map.has(row.id)) {
+        map.set(row.id, {
+          ...row,
+          members: [],
+        });
+      }
+
+      if (row.user_id) {
+        map.get(row.id).members.push({
+          user_id: row.user_id,
+          name: row.user_name,
+          role: row.role,
+          status: row.status,
+        });
+      }
+    }
+
+    return Array.from(map.values());
   }
 
   // ===== FIND BY ID =====
   async findById(id: number) {
     const [rows] = await this.mysql.execute(
-      `SELECT * FROM projects WHERE id = ? AND deleted_at IS NULL`,
+      `
+    SELECT 
+      p.*,
+      pm.user_id,
+      pm.role,
+      pm.status,
+      u.name as user_name
+    FROM projects p
+    LEFT JOIN project_members pm 
+      ON p.id = pm.project_id 
+      AND pm.deleted_at IS NULL
+    LEFT JOIN users u 
+      ON pm.user_id = u.id
+    WHERE p.id = ? AND p.deleted_at IS NULL
+    `,
       [id],
     );
 
     if (!rows.length) return null;
 
-    const project = rows[0];
+    const project = {
+      ...rows[0],
+      members: [],
+    };
 
+    for (const row of rows) {
+      if (row.user_id) {
+        project.members.push({
+          user_id: row.user_id,
+          name: row.user_name,
+          role: row.role,
+          status: row.status,
+        });
+      }
+    }
+
+    // tasks
     const [tasks] = await this.mysql.execute(
       `SELECT * FROM tasks WHERE project_id = ? AND deleted_at IS NULL`,
       [id],
     );
 
     project.tasks = tasks;
+
     return project;
   }
 
@@ -247,18 +315,64 @@ export class ProjectService {
   async getByUser(userId: number) {
     const [rows] = await this.mysql.execute(
       `
-      SELECT DISTINCT p.*
-      FROM projects p
-      LEFT JOIN project_members pm ON p.id = pm.project_id
-      WHERE 
-        (p.created_by = ? OR (pm.user_id = ? AND pm.status = 'accepted'))
-        AND pm.deleted_at IS NULL
-        AND p.deleted_at IS NULL
-      `,
+    SELECT 
+      p.*,
+      pm.user_id,
+      pm.role,
+      pm.status,
+      u.name as user_name
+    FROM projects p
+    LEFT JOIN project_members pm 
+      ON p.id = pm.project_id 
+      AND pm.deleted_at IS NULL
+    LEFT JOIN users u 
+      ON pm.user_id = u.id
+    WHERE 
+      p.deleted_at IS NULL
+      AND (
+        p.created_by = ?
+        OR EXISTS (
+          SELECT 1 
+          FROM project_members pm2
+          WHERE pm2.project_id = p.id
+            AND pm2.user_id = ?
+            AND pm2.status = 'accepted'
+            AND pm2.deleted_at IS NULL
+        )
+      )
+    `,
       [userId, userId],
     );
 
-    return rows;
+    const map = new Map();
+
+    for (const row of rows) {
+      if (!map.has(row.id)) {
+        map.set(row.id, {
+          id: row.id,
+          name: row.name,
+          description: row.description,
+          start_date: row.start_date,
+          end_date: row.end_date,
+          status: row.status,
+          created_by: row.created_by,
+          created_at: row.created_at,
+          updated_at: row.updated_at,
+          members: [],
+        });
+      }
+
+      if (row.user_id) {
+        map.get(row.id).members.push({
+          user_id: row.user_id,
+          name: row.user_name,
+          role: row.role,
+          status: row.status,
+        });
+      }
+    }
+
+    return Array.from(map.values());
   }
 
   // ===== GET ROLE =====

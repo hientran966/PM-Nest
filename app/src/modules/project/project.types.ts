@@ -8,6 +8,7 @@ export interface IProject {
   status?: string;
   created_by: number;
   deleted_at?: string | null;
+  members?: IProjectMember[];
 }
 
 // ===== TASK =====
@@ -21,9 +22,18 @@ export interface ITask {
   created_at?: string;
 }
 
+// ===== MEMBER =====
+export interface IProjectMember {
+  user_id: number;
+  name: string;
+  role: string;
+  status: string;
+}
+
 // ===== PROJECT DETAIL =====
 export interface IProjectDetail extends IProject {
   tasks: ITask[];
+  members: IProjectMember[];
 }
 
 // ===== QUERY =====

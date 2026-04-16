@@ -16,6 +16,9 @@ export default function LoginPage() {
     try {
       const response = await login(values);
       localStorage.setItem("token", response.token);
+      if (response.user?.id) {
+        localStorage.setItem("userId", response.user.id.toString());
+      }
       message.success("Đăng nhập thành công!");
       router.push("/");
     } catch (error: any) {

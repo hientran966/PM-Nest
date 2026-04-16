@@ -1,5 +1,5 @@
-import AuthGuard from "@/components/guards/AuthGuard";
-import Dashboard from "@/components/Dashboard";
+import AuthGuard from "../components/guards/AuthGuard";
+import Dashboard from "./dashboard/page";
 
 export default function Home() {
   return (

@@ -47,7 +47,9 @@ export const deleteProject = async (
 };
 
 // GET BY USER
-export const getProjectsByUser = async (userId: number) => {
+export const getProjectsByUser = async (
+  userId: number
+): Promise<IProject[]> => {
   const res = await api.get(`/projects/user/${userId}`);
   return res.data;
 };
