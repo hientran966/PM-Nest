@@ -7,16 +7,20 @@ import {
   Param,
   Body,
   Query,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { TaskService } from './task.service';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 @Controller('tasks')
 export class TaskController {
   constructor(private readonly service: TaskService) {}
 
   @Post()
-  create(@Body() body) {
-    return this.service.create(body);
+  @UseGuards(AuthGuard)
+  create(@Req() req, @Body() body) {
+    return this.service.create({ ...body, created_by: req.user.id });
   }
 
   @Get()
@@ -30,8 +34,9 @@ export class TaskController {
   }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() body) {
-    return this.service.update(Number(id), body);
+  @UseGuards(AuthGuard)
+  update(@Param('id') id: string, @Req() req, @Body() body) {
+    return this.service.update(Number(id), { ...body, updated_by: req.user.id });
   }
 
   @Delete(':id')
@@ -40,12 +45,13 @@ export class TaskController {
   }
 
   @Post(':id/progress')
+  @UseGuards(AuthGuard)
   logProgress(
     @Param('id') id: string,
+    @Req() req,
     @Body('progress') progress: number,
-    @Body('user_id') userId: number,
   ) {
-    return this.service.logProgress(Number(id), progress, userId);
+    return this.service.logProgress(Number(id), progress, req.user.id);
   }
 
   @Get('user/:userId')

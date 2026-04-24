@@ -1,28 +1,52 @@
 import {
   Controller,
   Get,
-  Post,
   Put,
   Delete,
   Patch,
   Param,
-  Body,
   Query,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { NotificationService } from './notification.service';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 @Controller('notifications')
 export class NotificationController {
   constructor(private readonly service: NotificationService) {}
 
-  @Post()
-  create(@Body() body: any) {
-    return this.service.create(body);
+  @Get('me')
+  @UseGuards(AuthGuard)
+  getMyNotifications(@Req() req, @Query() query: any) {
+    return this.service.find({
+      ...query,
+      recipient_id: req.user.id,
+    });
   }
 
-  @Get()
-  findAll(@Query() query: any) {
-    return this.service.find(query || {});
+  @Get('me/count')
+  @UseGuards(AuthGuard)
+  getMyCount(@Req() req) {
+    return this.service.getNewCount(req.user.id);
+  }
+
+  @Patch(':id/read')
+  @UseGuards(AuthGuard)
+  markAsRead(@Param('id') id: string) {
+    return this.service.markAsRead(Number(id));
+  }
+
+  @Patch('me/read')
+  @UseGuards(AuthGuard)
+  markAllAsRead(@Req() req) {
+    return this.service.markAllAsRead(req.user.id);
+  }
+
+  @Patch('me/unread')
+  @UseGuards(AuthGuard)
+  markAllAsUnread(@Req() req) {
+    return this.service.markAllAsUnread(req.user.id);
   }
 
   @Get(':id')
@@ -30,34 +54,9 @@ export class NotificationController {
     return this.service.findById(Number(id));
   }
 
-  @Put(':id')
-  update(@Param('id') id: string, @Body() body: any) {
-    return this.service.update(Number(id), body);
-  }
-
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.service.delete(Number(id));
-  }
-
-  @Patch(':id/read')
-  markAsRead(@Param('id') id: string) {
-    return this.service.markAsRead(Number(id));
-  }
-
-  @Patch('recipient/:recipient_id')
-  markAllAsRead(@Param('recipient_id') recipientId: string) {
-    return this.service.markAllAsRead(Number(recipientId));
-  }
-
-  @Patch('recipient/:recipient_id/unread')
-  markAllAsUnread(@Param('recipient_id') recipientId: string) {
-    return this.service.markAllAsUnread(Number(recipientId));
-  }
-
-  @Get('recipient/:recipient_id')
-  getNewCount(@Param('recipient_id') recipientId: string) {
-    return this.service.getNewCount(Number(recipientId));
   }
 
   @Put('deactive/:id')

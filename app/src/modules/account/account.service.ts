@@ -18,9 +18,9 @@ export const getAccounts = async (query?: IQuery) => {
   return res.data;
 };
 
-// GET ONE
-export const getAccountById = async (id: number) => {
-  const res = await api.get(`/accounts/${id}`);
+// GET ME
+export const getMe = async () => {
+  const res = await api.get("/accounts/me");
   return res.data;
 };
 
@@ -41,7 +41,6 @@ export const deleteAccount = async (id: number) => {
 
 // LOGIN
 export const login = async (data: ILoginPayload) => {
-  console.log("BASE URL:", process.env.NEXT_PUBLIC_API_URL);
   const res = await api.post("/accounts/login", data);
   return res.data;
 };
@@ -59,20 +58,14 @@ export const restoreAccount = async (id: number) => {
 };
 
 // CHANGE PASSWORD
-export const changePassword = async (
-  id: number,
-  data: IChangePasswordPayload
-) => {
-  const res = await api.put(`/accounts/${id}/password`, data);
+export const changePassword = async (data: IChangePasswordPayload) => {
+  const res = await api.put("/accounts/me/password", data);
   return res.data;
 };
 
 // GET STATS
-export const getAccountStats = async (
-  id: number,
-  projectId?: number
-) => {
-  const res = await api.get(`/accounts/${id}/stats`, {
+export const getMyStats = async (projectId?: number) => {
+  const res = await api.get("/accounts/me/stats", {
     params: { projectId },
   });
   return res.data;

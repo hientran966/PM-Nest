@@ -6,8 +6,11 @@ import {
   Delete,
   Param,
   Body,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { MemberService } from './member.service';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 @Controller('members')
 export class MemberController {
@@ -23,19 +26,22 @@ export class MemberController {
     return this.service.getByProjectId(Number(projectId));
   }
 
-  @Get('invites/:userId')
-  getInviteList(@Param('userId') userId: string) {
-    return this.service.getInviteList(Number(userId));
+  @Get('invites')
+  @UseGuards(AuthGuard)
+  getMyInvites(@Req() req) {
+    return this.service.getInviteList(req.user.id);
   }
 
   @Put(':id/accept')
-  acceptInvite(@Param('id') id: string, @Body('user_id') userId: number) {
-    return this.service.acceptInvite(Number(id), userId);
+  @UseGuards(AuthGuard)
+  acceptInvite(@Param('id') id: string, @Req() req) {
+    return this.service.acceptInvite(Number(id), req.user.id);
   }
 
   @Put(':id/decline')
-  declineInvite(@Param('id') id: string, @Body('user_id') userId: number) {
-    return this.service.declineInvite(Number(id), userId);
+  @UseGuards(AuthGuard)
+  declineInvite(@Param('id') id: string, @Req() req) {
+    return this.service.declineInvite(Number(id), req.user.id);
   }
 
   @Get(':id')

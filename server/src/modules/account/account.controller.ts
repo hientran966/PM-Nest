@@ -7,8 +7,11 @@ import {
   Param,
   Body,
   Query,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { AccountService } from './account.service';
+import { AuthGuard } from '../../common/guards/auth.guard';
 
 @Controller('accounts')
 export class AccountController {
@@ -24,9 +27,10 @@ export class AccountController {
     return this.service.find(query || {});
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findById(Number(id));
+  @Get('me')
+  @UseGuards(AuthGuard)
+  getMe(@Req() req) {
+    return this.service.findById(req.user.id);
   }
 
   @Put(':id')
@@ -54,19 +58,21 @@ export class AccountController {
     return this.service.restore(Number(id));
   }
 
-  @Put(':id/password')
-  changePassword(@Param('id') id: string, @Body() body) {
+  @Put('me/password')
+  @UseGuards(AuthGuard)
+  changePassword(@Req() req, @Body() body) {
     return this.service.changePassword(
-      Number(id),
+      req.user.id,
       body.oldPassword,
       body.newPassword,
     );
   }
 
-  @Get(':id/stats')
-  getStats(@Param('id') id: string, @Query('projectId') projectId?: string) {
+  @Get('me/stats')
+  @UseGuards(AuthGuard)
+  getStats(@Req() req, @Query('projectId') projectId?: string) {
     return this.service.getStats(
-      Number(id),
+      req.user.id,
       projectId ? Number(projectId) : null,
     );
   }

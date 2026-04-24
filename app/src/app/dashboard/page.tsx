@@ -23,7 +23,7 @@ import {
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { getProjectsByUser } from "@/modules/project/project.service";
-import { getAccountById } from "@/modules/account/account.service";
+import { getMe } from "@/modules/account/account.service";
 import { IProject } from "@/modules/project/project.types";
 import { IAccount } from "@/modules/account/account.types";
 
@@ -48,12 +48,12 @@ export default function Dashboard() {
         return;
       }
 
-      // Fetch user info
-      const userInfo = await getAccountById(Number(userId));
+      // Fetch user info (uses JWT token)
+      const userInfo = await getMe();
       setUser(userInfo);
 
-      // Fetch user projects
-      const userProjects = await getProjectsByUser(Number(userId));
+      // Fetch user projects (uses JWT token)
+      const userProjects = await getProjectsByUser();
       setProjects(userProjects);
     } catch (error) {
       console.error("Failed to fetch dashboard data:", error);

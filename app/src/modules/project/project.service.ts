@@ -47,21 +47,16 @@ export const deleteProject = async (
 };
 
 // GET BY USER
-export const getProjectsByUser = async (
-  userId: number
-): Promise<IProject[]> => {
-  const res = await api.get(`/projects/user/${userId}`);
+export const getProjectsByUser = async (): Promise<IProject[]> => {
+  const res = await api.get("/projects/me");
   return res.data;
 };
 
 // ROLE
 export const getProjectRole = async (
-  projectId: number,
-  userId: number
+  projectId: number
 ): Promise<IProjectRole | null> => {
-  const res = await api.get(
-    `/projects/${projectId}/role/${userId}`
-  );
+  const res = await api.get(`/projects/${projectId}/role`);
   return res.data;
 };
 

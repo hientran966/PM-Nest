@@ -7,6 +7,7 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     role ENUM('admin','user') DEFAULT 'user',
+    avatar_url VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP NULL
@@ -267,5 +268,8 @@ CREATE TABLE project_repositories (
   FOREIGN KEY (project_id) REFERENCES projects(id),
   UNIQUE KEY unique_project_repo (project_id, repo_id)
 );
+
+INSERT INTO users (id, name, email, password_hash, role) VALUES 
+(0, 'Admin User', 'admin@example.com', '$2a$10$bQfJ./.kFG1/wV/dMzK95OICjxDwiCU6ccSO9yQEpej6wnXMeOJpO', 'admin'); // password: admin123
 
 SET FOREIGN_KEY_CHECKS = 1;

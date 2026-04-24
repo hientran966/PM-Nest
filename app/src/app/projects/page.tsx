@@ -49,7 +49,7 @@ export default function ProjectsPage() {
         return;
       }
 
-      const userProjects = await getProjectsByUser(Number(userId));
+      const userProjects = await getProjectsByUser();
       setProjects(userProjects);
     } catch (error) {
       console.error("Failed to load projects", error);
@@ -65,12 +65,7 @@ export default function ProjectsPage() {
   const handleCreateProject = async (values: any) => {
     try {
       setCreating(true);
-      const userId = localStorage.getItem("userId");
-      console.log("Creating project with values:", values, "by userId:", userId);
-      if (!userId) {
-        message.error("Không tìm thấy thông tin người dùng");
-        return;
-      }
+      console.log("Creating project with values:", values);
 
       // Validate dates
       if (values.start_date && values.end_date) {
@@ -82,7 +77,6 @@ export default function ProjectsPage() {
 
       const projectData = {
         ...values,
-        created_by: Number(userId),
         start_date: values.start_date?.format("YYYY-MM-DD"),
         end_date: values.end_date?.format("YYYY-MM-DD"),
         //members: invitedMembers.map(email => ({ email, role: 'member' })),
